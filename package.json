@@ -28,6 +28,7 @@
     "prettier": "^1.7.4"
   },
   "dependencies": {
+    "@google-cloud/datastore": "^1.4.0",
     "@pheasantplucker/failables": "^2.0.4",
     "uuid": "^3.2.1"
   }
