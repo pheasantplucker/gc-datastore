@@ -1,0 +1,34 @@
+{
+  "name": "@pheasantplucker/gc-datastore",
+  "version": "0.0.1",
+  "description": "A failables wrapper around Google Cloud's Datastore",
+  "main": "src/datastore.js",
+  "scripts": {
+    "test": "mocha",
+    "lint": "esw .eslintrc.js src/ lib/ tests/ -w --fix --ignore-pattern !.eslintrc.js",
+    "deploy": "./deploy.sh"
+  },
+  "keywords": [
+    "google",
+    "cloud",
+    "datastore",
+    "failables"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pheasantplucker/gc-datastore.git"
+  },
+  "author": "chrisglick@gmail.com",
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^4.17.0",
+    "eslint-plugin-jest": "^21.9.0",
+    "eslint-plugin-prettier": "^2.6.0",
+    "eslint-watch": "^3.1.3",
+    "prettier": "^1.7.4"
+  },
+  "dependencies": {
+    "@pheasantplucker/failables": "^2.0.4",
+    "uuid": "^3.2.1"
+  }
+}
