@@ -3,7 +3,7 @@ const equal = require('assert').deepEqual
 const {
   createDatastoreClient,
   makeDatastoreKey,
-  makeEntity,
+  makeEntityByName,
   writeEntity,
 } = require('./datastore')
 // const uuid = require('uuid')
@@ -33,9 +33,9 @@ describe(`datastore.js`, () => {
     })
   })
 
-  describe('makeEntity()', () => {
+  describe('makeEntityByName()', () => {
     it('should make an entity to execute', () => {
-      const result = makeEntity(kind, entityName, testData)
+      const result = makeEntityByName(kind, entityName, testData)
       assertSuccess(result)
 
       const entity = payload(result)
@@ -46,7 +46,7 @@ describe(`datastore.js`, () => {
 
   describe('writeEntity()', () => {
     it('should write an entity to Datastore', async () => {
-      const entity = payload(makeEntity(kind, entityName, testData))
+      const entity = payload(makeEntityByName(kind, entityName, testData))
       const result = await writeEntity(entity)
       assertSuccess(result)
     })

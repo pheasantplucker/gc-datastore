@@ -29,7 +29,7 @@ const makeDatastoreKey = (kind, entityName) => {
   }
 }
 
-const makeEntity = (kind, entityName, data) => {
+const makeEntityByName = (kind, entityName, data) => {
   const dsKey = payload(makeDatastoreKey(kind, entityName))
   const entity = {
     key: dsKey,
@@ -49,6 +49,6 @@ const writeEntity = async entity => {
 module.exports = {
   createDatastoreClient,
   makeDatastoreKey,
-  makeEntity,
+  makeEntityByName,
   writeEntity,
 }
