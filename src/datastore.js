@@ -2,7 +2,7 @@ const {
   failure,
   success,
   // isFailure,
-  // payload,
+  payload,
 } = require('@pheasantplucker/failables')
 const Datastore = require('@google-cloud/datastore')
 
@@ -29,7 +29,26 @@ const makeDatastoreKey = (kind, entityName) => {
   }
 }
 
+const makeEntity = (kind, entityName, data) => {
+  const dsKey = payload(makeDatastoreKey(kind, entityName))
+  const entity = {
+    key: dsKey,
+    data: data,
+  }
+  return success(entity)
+}
+
+const writeEntity = async entity => {
+  try {
+    return success(await datastore.save(entity))
+  } catch (e) {
+    return failure(e.toString())
+  }
+}
+
 module.exports = {
   createDatastoreClient,
   makeDatastoreKey,
+  makeEntity,
+  writeEntity,
 }

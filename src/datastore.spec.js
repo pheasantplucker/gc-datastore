@@ -1,6 +1,11 @@
 const { assertSuccess, payload } = require(`@pheasantplucker/failables`)
 const equal = require('assert').deepEqual
-const { createDatastoreClient, makeDatastoreKey } = require('./datastore')
+const {
+  createDatastoreClient,
+  makeDatastoreKey,
+  makeEntity,
+  writeEntity,
+} = require('./datastore')
 // const uuid = require('uuid')
 
 const { GC_PROJECT_ID } = process.env
@@ -8,6 +13,7 @@ const { GC_PROJECT_ID } = process.env
 describe(`datastore.js`, () => {
   const kind = 'testKind'
   const entityName = 'testEntity'
+  const testData = { description: 'no where now here' }
 
   describe(`createDatastoreClient()`, () => {
     it(`should return a client`, () => {
@@ -19,9 +25,29 @@ describe(`datastore.js`, () => {
   describe('makeDatastoreKey()', () => {
     it('should return a valid key', () => {
       const result = makeDatastoreKey(kind, entityName)
+      assertSuccess(result)
+
       const key = payload(result)
       equal(key.name, entityName)
       equal(key.kind, kind)
+    })
+  })
+
+  describe('makeEntity()', () => {
+    it('should make an entity to execute', () => {
+      const result = makeEntity(kind, entityName, testData)
+      assertSuccess(result)
+
+      const entity = payload(result)
+      equal(entity.key, payload(makeDatastoreKey(kind, entityName)))
+      equal(entity.data, testData)
+    })
+  })
+
+  describe('writeEntity()', () => {
+    it('should write an entity to Datastore', async () => {
+      const entity = payload(makeEntity(kind, entityName, testData))
+      const result = await writeEntity(entity)
       assertSuccess(result)
     })
   })
