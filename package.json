@@ -4,7 +4,7 @@
   "description": "A failables wrapper around Google Cloud's Datastore",
   "main": "src/datastore.js",
   "scripts": {
-    "test": "mocha",
+    "test": "mocha ./src/*.spec.js",
     "lint": "esw .eslintrc.js src/ lib/ tests/ -w --fix --ignore-pattern !.eslintrc.js",
     "deploy": "./deploy.sh"
   },
@@ -30,6 +30,7 @@
   "dependencies": {
     "@google-cloud/datastore": "^1.4.0",
     "@pheasantplucker/failables": "^2.0.4",
+    "mocha": "^5.1.1",
     "uuid": "^3.2.1"
   }
 }
