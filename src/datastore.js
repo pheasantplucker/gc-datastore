@@ -21,6 +21,8 @@ const createDatastoreClient = projectId => {
 }
 
 const makeDatastoreKey = (kind, entityName) => {
+  if (kind === '' || entityName === '')
+    return failure({ kind, entityName }, 'Passed empty string')
   try {
     const newKey = datastore.key([kind, entityName])
     return success(newKey)
@@ -28,6 +30,29 @@ const makeDatastoreKey = (kind, entityName) => {
     return failure(e.toString())
   }
 }
+
+const getEntitiesByKeys = async key => {
+  try {
+    return success(await datastore.get(key))
+  } catch (e) {
+    return failure(e.toString())
+  }
+}
+//
+// const dbGet = keys => {
+//   const dbkeys = keys.map(k => {
+//     return datastore.key([k[0], k[1]])
+//   })
+//   return new Promise(function(resolve, reject) {
+//     datastore.get(dbkeys, function(err, entity) {
+//       if (err) {
+//         reject(err)
+//       } else {
+//         resolve(entity)
+//       }
+//     })
+//   })
+// }
 
 const makeEntityByName = (kind, entityName, data) => {
   const dsKey = payload(makeDatastoreKey(kind, entityName))
@@ -40,7 +65,12 @@ const makeEntityByName = (kind, entityName, data) => {
 
 const writeEntity = async entity => {
   try {
-    return success(await datastore.save(entity))
+    const result = await datastore.save(entity)
+    if (result[0].mutationResults) {
+      return success(result)
+    } else {
+      return failure(result)
+    }
   } catch (e) {
     return failure(e.toString())
   }
@@ -51,4 +81,5 @@ module.exports = {
   makeDatastoreKey,
   makeEntityByName,
   writeEntity,
+  getEntitiesByKeys,
 }
