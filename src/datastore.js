@@ -1,9 +1,4 @@
-const {
-  failure,
-  success,
-  // isFailure,
-  payload,
-} = require('@pheasantplucker/failables')
+const { failure, success, payload } = require('@pheasantplucker/failables')
 const Datastore = require('@google-cloud/datastore')
 
 let datastore
@@ -22,7 +17,7 @@ const createDatastoreClient = projectId => {
 
 const makeDatastoreKey = (kind, entityName) => {
   if (kind === '' || entityName === '')
-    return failure({ kind, entityName }, 'Passed empty string')
+    return failure({ kind, entityName }, { error: 'Passed empty string' })
   try {
     const newKey = datastore.key([kind, entityName])
     return success(newKey)
@@ -33,26 +28,18 @@ const makeDatastoreKey = (kind, entityName) => {
 
 const getEntitiesByKeys = async key => {
   try {
-    return success(await datastore.get(key))
+    const result = await datastore.get(key)
+    if (result[0] === undefined) {
+      return failure(key, {
+        error:
+          'Datastore returned undefined. Happens when key doesnt exist in DB.',
+      })
+    }
+    return success(result)
   } catch (e) {
     return failure(e.toString())
   }
 }
-//
-// const dbGet = keys => {
-//   const dbkeys = keys.map(k => {
-//     return datastore.key([k[0], k[1]])
-//   })
-//   return new Promise(function(resolve, reject) {
-//     datastore.get(dbkeys, function(err, entity) {
-//       if (err) {
-//         reject(err)
-//       } else {
-//         resolve(entity)
-//       }
-//     })
-//   })
-// }
 
 const makeEntityByName = (kind, entityName, data) => {
   const dsKey = payload(makeDatastoreKey(kind, entityName))
@@ -76,10 +63,43 @@ const writeEntity = async entity => {
   }
 }
 
+const deleteByKey = async key => {
+  try {
+    const result = await datastore.delete(key)
+    if (result[0].mutationResults) {
+      return success(result)
+    } else {
+      return failure(result)
+    }
+  } catch (e) {
+    return failure(e.toString())
+  }
+}
+
+const deleteEntity = async entityOrKey => {
+  try {
+    if (datastore.isKey(entityOrKey)) {
+      const result = deleteByKey(key)
+    } else {
+      console.log(`entityOrKey:`, entityOrKey)
+      const result = await datastore.delete(entity)
+      if (result[0].mutationResults) {
+        return success(result)
+      } else {
+        return failure(result)
+      }
+    }
+  } catch (e) {
+    return failure(e.toString())
+  }
+}
+
 module.exports = {
   createDatastoreClient,
   makeDatastoreKey,
   makeEntityByName,
   writeEntity,
   getEntitiesByKeys,
+  deleteEntity,
+  deleteByKey,
 }
