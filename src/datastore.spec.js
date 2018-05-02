@@ -33,7 +33,10 @@ describe(`datastore.js`, () => {
   })
 
   createDatastoreClient(GC_PROJECT_ID)
+
   const testKey1 = payload(makeDatastoreKey(kind, entityName1))
+  const entity1 = payload(makeEntityByName(kind, entityName1, testData1))
+
   const testKey2 = payload(makeDatastoreKey(kind, entityName2))
   const nonexistantKey = payload(makeDatastoreKey(kind, nonexistantEntityName))
 
@@ -68,18 +71,15 @@ describe(`datastore.js`, () => {
     })
   })
 
-  describe(`deleteEntity()`, () => {
-    it.skip(`should remove an entity from the DB`, async () => {
-      const entity1 = payload(makeEntityByName(kind, entityName1, testData1))
+  describe(`deleteEntity()`, async () => {
+    it(`should remove an entity from the DB`, async () => {
       const result = await deleteEntity(entity1)
-      console.log(`result:`, result)
       assertSuccess(result)
     })
   })
 
-  describe(`deleteByKey()`, () => {
+  describe(`deleteByKey()`, async () => {
     it(`should remove an entity from the DB by key`, async () => {
-      const entity1 = payload(makeEntityByName(kind, entityName1, testData1))
       const writeResult = await writeEntity(entity1)
       assertSuccess(writeResult)
       const result = await deleteByKey(testKey1)
@@ -91,10 +91,9 @@ describe(`datastore.js`, () => {
 
   describe('writeEntity()', () => {
     it('should write an entity to Datastore', async () => {
-      const entity = payload(makeEntityByName(kind, entityName1, testData1))
-      const result = await writeEntity(entity)
-      deleteEntity(entity)
+      const result = await writeEntity(entity1)
       assertSuccess(result)
+      deleteEntity(entity1)
     })
 
     it('should fail with no entity', async () => {
@@ -105,6 +104,8 @@ describe(`datastore.js`, () => {
 
   describe('getEntitiesByKeys()', () => {
     it('should return the correct entity', async () => {
+      const writeResult = await writeEntity(entity1)
+      assertSuccess(writeResult)
       const result = await getEntitiesByKeys(testKey1)
       assertSuccess(result)
       const keyData = payload(result)
@@ -123,12 +124,10 @@ describe(`datastore.js`, () => {
 
       const result = await getEntitiesByKeys(keys)
       assertSuccess(result)
-      const keysData = payload(result)
-      console.log(keysData)
-      const entity1Data = keysData[0]
-      const entity2Data = keysData[1]
-      equal(entity1Data, testData1)
-      equal(entity2Data, testData2)
+      const keysData = payload(result)[0]
+      console.log(`keysData:`, keysData)
+      equal(keysData.includes(testData1), true)
+      equal(keysData.includes(testData2), true)
     })
   })
 })

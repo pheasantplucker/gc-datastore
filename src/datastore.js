@@ -35,6 +35,12 @@ const getEntitiesByKeys = async key => {
           'Datastore returned undefined. Happens when key doesnt exist in DB.',
       })
     }
+
+    // want as:
+    // {
+    //   testEntity1:{description:'no where now here when ew'},
+    //   testEntity2:{description:'how now brown cow'}
+    // }
     return success(result)
   } catch (e) {
     return failure(e.toString())
@@ -79,16 +85,17 @@ const deleteByKey = async key => {
 const deleteEntity = async entityOrKey => {
   try {
     if (datastore.isKey(entityOrKey)) {
-      const result = deleteByKey(key)
-    } else {
-      console.log(`entityOrKey:`, entityOrKey)
-      const result = await datastore.delete(entity)
-      if (result[0].mutationResults) {
-        return success(result)
-      } else {
-        return failure(result)
+      return await deleteByKey(entityOrKey)
+    }
+
+    if (entityOrKey.key) {
+      const maybeKey = entityOrKey.key
+      if (datastore.isKey(maybeKey)) {
+        return await deleteByKey(maybeKey)
       }
     }
+
+    return failure(entityOrKey, { error: `Couldn't find valid key.` })
   } catch (e) {
     return failure(e.toString())
   }
