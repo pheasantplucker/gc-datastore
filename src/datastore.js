@@ -41,7 +41,8 @@ const getEntitiesByKeys = async key => {
     //   testEntity1:{description:'no where now here when ew'},
     //   testEntity2:{description:'how now brown cow'}
     // }
-    return success(result)
+    const justData = result[0]
+    return success(justData)
   } catch (e) {
     return failure(e.toString())
   }

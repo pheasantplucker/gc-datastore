@@ -2,6 +2,7 @@ const {
   assertSuccess,
   assertFailure,
   payload,
+  isSuccess,
 } = require(`@pheasantplucker/failables`)
 const equal = require('assert').deepEqual
 const {
@@ -13,7 +14,6 @@ const {
   deleteEntity,
   deleteByKey,
 } = require('./datastore')
-// const uuid = require('uuid')
 
 const { GC_PROJECT_ID } = process.env
 
@@ -102,14 +102,30 @@ describe(`datastore.js`, () => {
     })
   })
 
+  describe('formatGetResponse', () => {
+    it(`should convert the raw response to a cleaner struct`, async () => {
+      const writeResult = await writeEntity(entity1)
+      assertSuccess(writeResult)
+      if (isSuccess(writeResult)) {
+        const result = await getEntitiesByKeys(testKey1)
+        assertSuccess(result)
+        const key1Data = payload(result)
+        equal(testData1, key1Data)
+      }
+    })
+  })
+
   describe('getEntitiesByKeys()', () => {
     it('should return the correct entity', async () => {
       const writeResult = await writeEntity(entity1)
       assertSuccess(writeResult)
-      const result = await getEntitiesByKeys(testKey1)
-      assertSuccess(result)
-      const keyData = payload(result)
-      equal(keyData[0], testData1)
+      if (isSuccess(writeResult)) {
+        const result = await getEntitiesByKeys(testKey1)
+        assertSuccess(result)
+        const keyData = payload(result)
+        equal(keyData, testData1)
+        deleteEntity(entity1)
+      }
     })
 
     it('should fail with an entity not in the DS', async () => {
@@ -128,6 +144,7 @@ describe(`datastore.js`, () => {
       console.log(`keysData:`, keysData)
       equal(keysData.includes(testData1), true)
       equal(keysData.includes(testData2), true)
+      deleteEntity(entity2)
     })
   })
 })
