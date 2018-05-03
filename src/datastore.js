@@ -1,4 +1,9 @@
-const { failure, success, payload } = require('@pheasantplucker/failables')
+const {
+  failure,
+  success,
+  payload,
+  isFailure,
+} = require('@pheasantplucker/failables')
 const Datastore = require('@google-cloud/datastore')
 
 let datastore
@@ -15,6 +20,19 @@ const createDatastoreClient = projectId => {
   }
 }
 
+const getDatastoreKey = () => {
+  if (!datastore) {
+    console.log('no data')
+    const datastoreClient = createDatastoreClient()
+    if (isFailure(datastoreClient)) {
+      return failure(datastoreClient, {
+        error: 'Couldnt make datastore client',
+      })
+    }
+  }
+  return success(datastore.KEY)
+}
+
 const makeDatastoreKey = (kind, entityName) => {
   if (kind === '' || entityName === '')
     return failure({ kind, entityName }, { error: 'Passed empty string' })
@@ -26,7 +44,13 @@ const makeDatastoreKey = (kind, entityName) => {
   }
 }
 
-const getEntitiesByKeys = async key => {
+// want as:
+// {
+//   testEntity1:{description:'no where now here when ew'},
+//   testEntity2:{description:'how now brown cow'}
+// }
+
+const getRawEntitiesByKeys = async key => {
   try {
     const result = await datastore.get(key)
     if (result[0] === undefined) {
@@ -35,14 +59,7 @@ const getEntitiesByKeys = async key => {
           'Datastore returned undefined. Happens when key doesnt exist in DB.',
       })
     }
-
-    // want as:
-    // {
-    //   testEntity1:{description:'no where now here when ew'},
-    //   testEntity2:{description:'how now brown cow'}
-    // }
-    const justData = result[0]
-    return success(justData)
+    return success(result)
   } catch (e) {
     return failure(e.toString())
   }
@@ -107,7 +124,8 @@ module.exports = {
   makeDatastoreKey,
   makeEntityByName,
   writeEntity,
-  getEntitiesByKeys,
+  getRawEntitiesByKeys,
   deleteEntity,
   deleteByKey,
+  getDatastoreKey,
 }

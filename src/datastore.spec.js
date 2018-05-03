@@ -10,9 +10,10 @@ const {
   makeDatastoreKey,
   makeEntityByName,
   writeEntity,
-  getEntitiesByKeys,
+  getRawEntitiesByKeys,
   deleteEntity,
   deleteByKey,
+  getDatastoreKey,
 } = require('./datastore')
 
 const { GC_PROJECT_ID } = process.env
@@ -84,7 +85,7 @@ describe(`datastore.js`, () => {
       assertSuccess(writeResult)
       const result = await deleteByKey(testKey1)
       assertSuccess(result)
-      const entity1Read = await getEntitiesByKeys(testKey1)
+      const entity1Read = await getRawEntitiesByKeys(testKey1)
       assertFailure(entity1Read)
     })
   })
@@ -102,34 +103,50 @@ describe(`datastore.js`, () => {
     })
   })
 
-  describe('formatGetResponse', () => {
+  describe(`getDatastoreKey()`, () => {
+    it(`should Create a client if none exists`, () => {
+      const result = getDatastoreKey()
+      assertSuccess(result)
+    })
+    it(`should return the symbol`, () => {
+      const result = getDatastoreKey()
+      assertSuccess(result)
+      const key = payload(result)
+      equal('symbol', typeof key)
+    })
+  })
+
+  describe('formatGetResponse()', () => {
     it(`should convert the raw response to a cleaner struct`, async () => {
       const writeResult = await writeEntity(entity1)
       assertSuccess(writeResult)
       if (isSuccess(writeResult)) {
-        const result = await getEntitiesByKeys(testKey1)
-        assertSuccess(result)
-        const key1Data = payload(result)
+        const getResponse = await getRawEntitiesByKeys(testKey1)
+        console.log(`result:`, getResponse)
+        assertSuccess(getResponse)
+        const key1Data = payload(getResponse)
+        formatGetResponse
         equal(testData1, key1Data)
       }
     })
   })
 
-  describe('getEntitiesByKeys()', () => {
+  describe('getRawEntitiesByKeys()', () => {
     it('should return the correct entity', async () => {
       const writeResult = await writeEntity(entity1)
       assertSuccess(writeResult)
       if (isSuccess(writeResult)) {
-        const result = await getEntitiesByKeys(testKey1)
+        const result = await getRawEntitiesByKeys(testKey1)
         assertSuccess(result)
-        const keyData = payload(result)
-        equal(keyData, testData1)
+        const rawResponse = payload(result)
+        const responseData = rawResponse[0]
+        equal(responseData, testData1)
         deleteEntity(entity1)
       }
     })
 
     it('should fail with an entity not in the DS', async () => {
-      const result = await getEntitiesByKeys(nonexistantKey)
+      const result = await getRawEntitiesByKeys(nonexistantKey)
       assertFailure(result)
     })
 
@@ -138,7 +155,7 @@ describe(`datastore.js`, () => {
       const entity2 = payload(makeEntityByName(kind, entityName2, testData2))
       writeEntity(entity2)
 
-      const result = await getEntitiesByKeys(keys)
+      const result = await getRawEntitiesByKeys(keys)
       assertSuccess(result)
       const keysData = payload(result)[0]
       console.log(`keysData:`, keysData)
