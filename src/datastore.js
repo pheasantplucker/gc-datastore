@@ -20,7 +20,7 @@ const createDatastoreClient = projectId => {
   }
 }
 
-const getDatastoreKey = () => {
+const getDatastoreKeySymbol = () => {
   if (!datastore) {
     console.log('no data')
     const datastoreClient = createDatastoreClient()
@@ -100,6 +100,19 @@ const deleteByKey = async key => {
   }
 }
 
+const formatGetResponse = response => {
+  const symbol = payload(getDatastoreKeySymbol())
+  const metadata = response.map(e => {
+    return e[symbol]
+  })
+  const data = response.map(e => {
+    const name = e[symbol].name
+    delete e[symbol]
+    return { [name]: e }
+  })
+  return success(data[0], metadata[0])
+}
+
 const deleteEntity = async entityOrKey => {
   try {
     if (datastore.isKey(entityOrKey)) {
@@ -127,5 +140,6 @@ module.exports = {
   getRawEntitiesByKeys,
   deleteEntity,
   deleteByKey,
-  getDatastoreKey,
+  getDatastoreKeySymbol,
+  formatGetResponse,
 }

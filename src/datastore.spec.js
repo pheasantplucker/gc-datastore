@@ -13,7 +13,8 @@ const {
   getRawEntitiesByKeys,
   deleteEntity,
   deleteByKey,
-  getDatastoreKey,
+  getDatastoreKeySymbol,
+  formatGetResponse,
 } = require('./datastore')
 
 const { GC_PROJECT_ID } = process.env
@@ -103,13 +104,13 @@ describe(`datastore.js`, () => {
     })
   })
 
-  describe(`getDatastoreKey()`, () => {
+  describe(`getDatastoreKeySymbol()`, () => {
     it(`should Create a client if none exists`, () => {
-      const result = getDatastoreKey()
+      const result = getDatastoreKeySymbol()
       assertSuccess(result)
     })
     it(`should return the symbol`, () => {
-      const result = getDatastoreKey()
+      const result = getDatastoreKeySymbol()
       assertSuccess(result)
       const key = payload(result)
       equal('symbol', typeof key)
@@ -122,11 +123,12 @@ describe(`datastore.js`, () => {
       assertSuccess(writeResult)
       if (isSuccess(writeResult)) {
         const getResponse = await getRawEntitiesByKeys(testKey1)
-        console.log(`result:`, getResponse)
         assertSuccess(getResponse)
         const key1Data = payload(getResponse)
-        formatGetResponse
-        equal(testData1, key1Data)
+        const result = formatGetResponse(key1Data)
+        const cleanReturn = payload(result)
+        assertSuccess(result)
+        equal({ [entityName1]: testData1 }, cleanReturn)
       }
     })
   })
