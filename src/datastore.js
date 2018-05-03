@@ -5,6 +5,7 @@ const {
   isFailure,
 } = require('@pheasantplucker/failables')
 const Datastore = require('@google-cloud/datastore')
+const ramda = require('ramda')
 
 let datastore
 
@@ -44,11 +45,11 @@ const makeDatastoreKey = (kind, entityName) => {
   }
 }
 
-// want as:
-// {
-//   testEntity1:{description:'no where now here when ew'},
-//   testEntity2:{description:'how now brown cow'}
-// }
+const readEntities = async keys => {
+  const getEntities = await getRawEntitiesByKeys(keys)
+  const rawResponse = payload(getEntities)
+  return formatGetResponse(rawResponse)
+}
 
 const getRawEntitiesByKeys = async key => {
   try {
@@ -59,7 +60,8 @@ const getRawEntitiesByKeys = async key => {
           'Datastore returned undefined. Happens when key doesnt exist in DB.',
       })
     }
-    return success(result)
+    const extraArrayLayersRemoved = [].concat.apply([], result)
+    return success(extraArrayLayersRemoved)
   } catch (e) {
     return failure(e.toString())
   }
@@ -100,19 +102,6 @@ const deleteByKey = async key => {
   }
 }
 
-const formatGetResponse = response => {
-  const symbol = payload(getDatastoreKeySymbol())
-  const metadata = response.map(e => {
-    return e[symbol]
-  })
-  const data = response.map(e => {
-    const name = e[symbol].name
-    delete e[symbol]
-    return { [name]: e }
-  })
-  return success(data[0], metadata[0])
-}
-
 const deleteEntity = async entityOrKey => {
   try {
     if (datastore.isKey(entityOrKey)) {
@@ -126,13 +115,31 @@ const deleteEntity = async entityOrKey => {
       }
     }
 
-    return failure(entityOrKey, { error: `Couldn't find valid key.` })
+    return failure(entityOrKey, { error: `Couldnt find valid key.` })
   } catch (e) {
     return failure(e.toString())
   }
 }
 
+/* Helpers */
+const formatGetResponse = response => {
+  const symbol = payload(getDatastoreKeySymbol())
+  const metadata = response.map(e => {
+    return e[symbol]
+  })
+  const data = response.map(e => {
+    const name = e[symbol].name
+    delete e[symbol]
+    return [name, e]
+  })
+
+  const objectifiedData = ramda.fromPairs(data)
+
+  return success(objectifiedData, metadata)
+}
+
 module.exports = {
+  readEntities,
   createDatastoreClient,
   makeDatastoreKey,
   makeEntityByName,
