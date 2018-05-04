@@ -4,27 +4,32 @@ const {
   payload,
   isSuccess,
   isFailure,
+  meta,
 } = require(`@pheasantplucker/failables`)
-const equal = require('assert').deepEqual
+const assert = require('assert')
+const equal = assert.deepEqual
 const {
   createDatastoreClient,
   makeDatastoreKey,
   makeEntityByName,
   writeEntity,
-  getRawEntitiesByKeys,
   deleteEntity,
-  deleteByKey,
-  getDatastoreKeySymbol,
-  formatGetResponse,
   readEntities,
+  formatResponse,
   createQueryObj,
   runQuery,
+  runQueryKeysOnly,
+  deleteByKey,
+  getRawEntitiesByKeys,
+  formatKeyResponse,
+  getDatastoreKeySymbol,
 } = require('./datastore')
 
 const { GC_PROJECT_ID } = process.env
 
 describe(`datastore.js`, () => {
   const kind = 'testKind'
+  const kind2 = 'testKind2'
   const namespace = 'testNamespace'
   const entityName1 = 'testEntity1'
   const entityName2 = 'testEntity2'
@@ -48,9 +53,15 @@ describe(`datastore.js`, () => {
   const entity2 = payload(makeEntityByName(kind, entityName2, testData2))
 
   const nonexistantKey = payload(makeDatastoreKey(kind, nonexistantEntityName))
-
+  const separateKindEntity = payload(
+    makeEntityByName(kind2, entityName1, testData1)
+  )
   const setup = async () => {
-    const writeResult = await writeEntity([entity1, entity2])
+    const writeResult = await writeEntity([
+      entity1,
+      entity2,
+      separateKindEntity,
+    ])
     assertSuccess(writeResult)
   }
 
@@ -143,12 +154,12 @@ describe(`datastore.js`, () => {
     })
   })
 
-  describe('formatGetResponse()', () => {
+  describe('formatResponse()', () => {
     it(`should convert the raw response to a cleaner struct`, async () => {
       const getResponse = await getRawEntitiesByKeys(testKey1)
       assertSuccess(getResponse)
       const key1Data = payload(getResponse)
-      const result = formatGetResponse(key1Data)
+      const result = formatResponse(key1Data)
       const cleanReturn = payload(result)
       assertSuccess(result)
       equal({ [entityName1]: testData1 }, cleanReturn)
@@ -158,7 +169,35 @@ describe(`datastore.js`, () => {
       const getResponse = await getRawEntitiesByKeys([testKey1, testKey2])
       assertSuccess(getResponse)
       const keysData = payload(getResponse)
-      const result = formatGetResponse(keysData)
+      const result = formatResponse(keysData)
+      const cleanReturn = payload(result)
+      assertSuccess(result)
+      equal(
+        {
+          [entityName1]: testData1,
+          [entityName2]: testData2,
+        },
+        cleanReturn
+      )
+    })
+  })
+
+  describe('formatKeyResponse()', () => {
+    it(`should convert the raw response to a cleaner struct`, async () => {
+      const getResponse = await getRawEntitiesByKeys(testKey1)
+      assertSuccess(getResponse)
+      const key1Data = payload(getResponse)
+      const result = formatKeyResponse(key1Data)
+      const cleanReturn = payload(result)
+      assertSuccess(result)
+      equal({ [entityName1]: testKey1 }, cleanReturn)
+    })
+
+    it(`should return multiple entities as object attributes`, async () => {
+      const getResponse = await getRawEntitiesByKeys([testKey1, testKey2])
+      assertSuccess(getResponse)
+      const keysData = payload(getResponse)
+      const result = formatResponse(keysData)
       const cleanReturn = payload(result)
       assertSuccess(result)
       equal(
@@ -192,15 +231,39 @@ describe(`datastore.js`, () => {
       equal(queryObj.kinds[0], kind)
     })
 
-    it.skip(`COULD also set the datastore object scope`, () => {
-      // but I don't know why you need that!
+    // it.skip(`COULD also set the datastore object scope`, () => {
+    //    //but I don't know why you need that!
+    // })
+  })
+
+  describe(`runQuery()`, () => {
+    it(`should fail with no query`, async () => {
+      const result = await runQuery()
+      assertFailure(result)
+    })
+
+    it(`should return all elements from a query`, async () => {
+      const query = payload(createQueryObj(kind))
+      const result = await runQuery(query)
+      assertSuccess(result)
+      const responses = payload(result)
+      const metadata = meta(result)
+      assert(
+        metadata.queryEndDetails.moreResults,
+        'This attribute should exist.'
+      )
+      // not sure what other tests are creating/deleting objects
+      equal(Object.keys(responses).length > 1, true)
     })
   })
 
-  describe.skip(`runQuery()`, () => {
-    it(`should return all elements from a query`, async query => {
-      const result = runQuery()
+  describe(`runQueryKeysOnly`, () => {
+    it(`should return only the keys which are cheaper`, async () => {
+      const query = payload(createQueryObj(kind))
+      const result = await runQueryKeysOnly(query)
       assertSuccess(result)
+      const keys = payload(result)
+      assert(Object.keys(keys).length > 1)
     })
   })
 

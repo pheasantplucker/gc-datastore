@@ -3,6 +3,7 @@ const {
   success,
   payload,
   isFailure,
+  meta,
 } = require('@pheasantplucker/failables')
 const Datastore = require('@google-cloud/datastore')
 const ramda = require('ramda')
@@ -39,7 +40,7 @@ const makeDatastoreKey = (kind, entityName) => {
 const readEntities = async keys => {
   const getEntities = await getRawEntitiesByKeys(keys)
   const rawResponse = payload(getEntities)
-  return formatGetResponse(rawResponse)
+  return formatResponse(rawResponse)
 }
 
 const getRawEntitiesByKeys = async key => {
@@ -123,13 +124,44 @@ const createQueryObj = (kind, ...rest) => {
   return success(thisQueryObj)
 }
 
-const runQuery = () => {
-  //do
+const runQuery = async queryObj => {
+  try {
+    const runningQuery = await datastore.runQuery(queryObj)
+    const entities = runningQuery[0]
+    const queryEndDetails = runningQuery[1]
+    const formatted = formatResponse(entities)
+    if (isFailure(formatted)) return formatted
+    const formattedEntities = payload(formatted)
+    const formattedKeys = meta(formatted)
+
+    //test something?
+    return success(formattedEntities, { queryEndDetails, formattedKeys })
+  } catch (e) {
+    return failure(e.toString())
+  }
+}
+
+const runQueryKeysOnly = async queryObj => {
+  try {
+    const keysOnlyQuery = queryObj.select('__key__')
+    const runningQuery = await datastore.runQuery(keysOnlyQuery)
+    const entities = runningQuery[0]
+    const queryEndDetails = runningQuery[1]
+    const formatted = formatKeyResponse(entities)
+    if (isFailure(formatted)) return formatted
+    const formattedEntities = payload(formatted)
+    const formattedKeys = meta(formatted)
+
+    //test something?
+    return success(formattedEntities, { queryEndDetails, formattedKeys })
+  } catch (e) {
+    return failure(e.toString())
+  }
   return success()
 }
 
 /* Helpers */
-const formatGetResponse = response => {
+const formatResponse = response => {
   const symbol = payload(getDatastoreKeySymbol())
   const metadata = response.map(e => {
     return e[symbol]
@@ -138,6 +170,21 @@ const formatGetResponse = response => {
     const name = e[symbol].name
     delete e[symbol]
     return [name, e]
+  })
+
+  const objectifiedData = ramda.fromPairs(data)
+
+  return success(objectifiedData, metadata)
+}
+
+const formatKeyResponse = response => {
+  const symbol = payload(getDatastoreKeySymbol())
+  const metadata = response.map(e => {
+    return e[symbol]
+  })
+  const data = response.map(e => {
+    const name = e[symbol].name
+    return [name, e[symbol]]
   })
 
   const objectifiedData = ramda.fromPairs(data)
@@ -162,7 +209,9 @@ module.exports = {
   deleteEntity,
   deleteByKey,
   getDatastoreKeySymbol,
-  formatGetResponse,
+  formatResponse,
+  formatKeyResponse,
   createQueryObj,
   runQuery,
+  runQueryKeysOnly,
 }
