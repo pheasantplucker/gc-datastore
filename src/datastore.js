@@ -22,15 +22,6 @@ const createDatastoreClient = projectId => {
 }
 
 const getDatastoreKeySymbol = () => {
-  if (!datastore) {
-    console.log('no data')
-    const datastoreClient = createDatastoreClient()
-    if (isFailure(datastoreClient)) {
-      return failure(datastoreClient, {
-        error: 'Couldnt make datastore client',
-      })
-    }
-  }
   return success(datastore.KEY)
 }
 
@@ -77,6 +68,9 @@ const makeEntityByName = (kind, entityName, data) => {
 }
 
 const writeEntity = async entity => {
+  const datastoreInitialized = checkIfDatastoreInitialized()
+  if (isFailure(datastoreInitialized)) return datastoreInitialized
+
   try {
     const result = await datastore.save(entity)
     if (result[0].mutationResults) {
@@ -121,6 +115,19 @@ const deleteEntity = async entityOrKey => {
   }
 }
 
+const createQueryObj = (kind, ...rest) => {
+  if (typeof kind != 'string' || kind === '') {
+    return failure([kind, ...rest], { error: 'NEed a kind.' })
+  }
+  const thisQueryObj = datastore.createQuery(...rest, kind)
+  return success(thisQueryObj)
+}
+
+const runQuery = () => {
+  //do
+  return success()
+}
+
 /* Helpers */
 const formatGetResponse = response => {
   const symbol = payload(getDatastoreKeySymbol())
@@ -138,6 +145,13 @@ const formatGetResponse = response => {
   return success(objectifiedData, metadata)
 }
 
+const checkIfDatastoreInitialized = caller => {
+  if (datastore) return success()
+  return failure(caller, {
+    error: 'DatastoreClient was called but not Created!',
+  })
+}
+
 module.exports = {
   readEntities,
   createDatastoreClient,
@@ -149,4 +163,6 @@ module.exports = {
   deleteByKey,
   getDatastoreKeySymbol,
   formatGetResponse,
+  createQueryObj,
+  runQuery,
 }

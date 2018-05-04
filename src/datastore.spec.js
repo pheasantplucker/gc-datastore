@@ -17,12 +17,15 @@ const {
   getDatastoreKeySymbol,
   formatGetResponse,
   readEntities,
+  createQueryObj,
+  runQuery,
 } = require('./datastore')
 
 const { GC_PROJECT_ID } = process.env
 
 describe(`datastore.js`, () => {
   const kind = 'testKind'
+  const namespace = 'testNamespace'
   const entityName1 = 'testEntity1'
   const entityName2 = 'testEntity2'
   const nonexistantEntityName = 'ERROR_ERROR_IF_THIS_IS_WRITEN_BAD'
@@ -165,6 +168,39 @@ describe(`datastore.js`, () => {
         },
         cleanReturn
       )
+    })
+  })
+
+  describe(`createQueryObj()`, () => {
+    it(`should return a query object`, () => {
+      const result = createQueryObj(kind)
+      assertSuccess(result)
+      const queryObj = payload(result)
+      equal(typeof queryObj, 'object')
+    })
+
+    it('should fail with no kind', () => {
+      const result = createQueryObj('')
+      assertFailure(result)
+    })
+
+    it(`should set the namespace if given 2 args`, () => {
+      const result = createQueryObj(kind, namespace)
+      assertSuccess(result)
+      const queryObj = payload(result)
+      equal(queryObj.namespace, namespace)
+      equal(queryObj.kinds[0], kind)
+    })
+
+    it.skip(`COULD also set the datastore object scope`, () => {
+      // but I don't know why you need that!
+    })
+  })
+
+  describe.skip(`runQuery()`, () => {
+    it(`should return all elements from a query`, async query => {
+      const result = runQuery()
+      assertSuccess(result)
     })
   })
 
