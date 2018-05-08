@@ -4,7 +4,7 @@ const {
   payload,
   isFailure,
   meta,
-} = require('@pheasantplucker/failables')
+} = require('@pheasantplucker/failables-node6')
 const Datastore = require('@google-cloud/datastore')
 const ramda = require('ramda')
 

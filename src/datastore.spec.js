@@ -5,7 +5,7 @@ const {
   isSuccess,
   isFailure,
   meta,
-} = require(`@pheasantplucker/failables`)
+} = require(`@pheasantplucker/failables-node6`)
 const assert = require('assert')
 const equal = assert.deepEqual
 const {
