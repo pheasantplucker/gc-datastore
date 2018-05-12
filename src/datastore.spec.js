@@ -269,7 +269,7 @@ describe(`datastore.js`, () => {
 
   describe('readEntities()', async () => {
     it(`should return a nice formatted list with response stuff in metadata`, async () => {
-      const result = await readEntities(testKey1)
+      const result = await readEntities([testKey1])
       assertSuccess(result)
       const keyData = payload(result)
       equal(
@@ -278,6 +278,31 @@ describe(`datastore.js`, () => {
         },
         keyData
       )
+    })
+
+    it(`should work with an array`, async () => {
+      const testKeys = [testKey1, testKey2]
+      const result = await readEntities(testKeys)
+      assertSuccess(result)
+      const keyData = payload(result)
+      equal(testData1, keyData[entityName1])
+      equal(testData2, keyData[entityName2])
+    })
+
+    it(`should return undefined if it doesn't read`, async () => {
+      const testKeys = [testKey1, testKey2, nonexistantKey]
+      const result = await readEntities(testKeys)
+      assertSuccess(result)
+      const keyData = payload(result)
+      equal(testData1, keyData[entityName1])
+      equal(testData2, keyData[entityName2])
+      equal(undefined, keyData[nonexistantKey])
+      console.log(`keyData:`, keyData)
+    })
+
+    it('should fail if the key doesnt exist', async () => {
+      const result = await readEntities([nonexistantKey])
+      assertFailure(result)
     })
   })
 

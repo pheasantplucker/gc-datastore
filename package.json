@@ -1,10 +1,11 @@
 {
   "name": "@pheasantplucker/gc-datastore",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "A failables wrapper around Google Cloud's Datastore",
   "main": "src/datastore.js",
   "scripts": {
     "test": "mocha ./build/*.spec.js",
+    "fasttest": "mocha ./src/*.spec.js",
     "lint": "esw .eslintrc.js src/ lib/ tests/ -w --fix --ignore-pattern !.eslintrc.js",
     "deploy": "./deploy.sh",
     "main": "./build/datastore.js",

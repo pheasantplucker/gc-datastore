@@ -39,15 +39,41 @@ const makeDatastoreKey = (kind, entityName) => {
 
 const readEntities = async keys => {
   const getEntities = await getRawEntitiesByKeys(keys)
+  if (isFailure(getEntities)) {
+    return getEntities
+  }
   const rawResponse = payload(getEntities)
-  return formatResponse(rawResponse)
+  if (rawResponse.length === 0) {
+    return failure(keys, {
+      error: 'Key read returned empty, key probably not in DB',
+    })
+  }
+
+  const cleanResponseResult = formatResponse(rawResponse)
+  if (isFailure(cleanResponseResult)) {
+    return cleanResponseResult
+  }
+  const cleanResponse = payload(cleanResponseResult)
+
+  const inputKeys = keys.map(key => {
+    return key.name
+  })
+
+  let missingKeysObj = {}
+  inputKeys.map(keyName => {
+    if (!cleanResponse[keyName]) {
+      missingKeysObj[keyName] = undefined
+    }
+  })
+  const combinedOutput = Object.assign(cleanResponse, missingKeysObj)
+  return success(combinedOutput)
 }
 
-const getRawEntitiesByKeys = async key => {
+const getRawEntitiesByKeys = async keys => {
   try {
-    const result = await datastore.get(key)
+    const result = await datastore.get(keys)
     if (result[0] === undefined) {
-      return failure(key, {
+      return failure(keys, {
         error:
           'Datastore returned undefined. Happens when key doesnt exist in DB.',
       })
