@@ -43,8 +43,34 @@ const makeDatastoreKey = (kind, entityName) => {
 const readEntities = (() => {
   var _ref = _asyncToGenerator(function* (keys) {
     const getEntities = yield getRawEntitiesByKeys(keys);
+    if (isFailure(getEntities)) {
+      return getEntities;
+    }
     const rawResponse = payload(getEntities);
-    return formatResponse(rawResponse);
+    if (rawResponse.length === 0) {
+      return failure(keys, {
+        error: 'Key read returned empty, key probably not in DB'
+      });
+    }
+
+    const cleanResponseResult = formatResponse(rawResponse);
+    if (isFailure(cleanResponseResult)) {
+      return cleanResponseResult;
+    }
+    const cleanResponse = payload(cleanResponseResult);
+
+    const inputKeys = keys.map(function (key) {
+      return key.name;
+    });
+
+    let missingKeysObj = {};
+    inputKeys.map(function (keyName) {
+      if (!cleanResponse[keyName]) {
+        missingKeysObj[keyName] = undefined;
+      }
+    });
+    const combinedOutput = Object.assign(cleanResponse, missingKeysObj);
+    return success(combinedOutput);
   });
 
   return function readEntities(_x) {
@@ -53,11 +79,11 @@ const readEntities = (() => {
 })();
 
 const getRawEntitiesByKeys = (() => {
-  var _ref2 = _asyncToGenerator(function* (key) {
+  var _ref2 = _asyncToGenerator(function* (keys) {
     try {
-      const result = yield datastore.get(key);
+      const result = yield datastore.get(keys);
       if (result[0] === undefined) {
-        return failure(key, {
+        return failure(keys, {
           error: 'Datastore returned undefined. Happens when key doesnt exist in DB.'
         });
       }

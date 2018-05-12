@@ -297,7 +297,6 @@ describe(`datastore.js`, () => {
       equal(testData1, keyData[entityName1])
       equal(testData2, keyData[entityName2])
       equal(undefined, keyData[nonexistantKey])
-      console.log(`keyData:`, keyData)
     })
 
     it('should fail if the key doesnt exist', async () => {

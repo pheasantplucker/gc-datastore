@@ -264,12 +264,36 @@ describe(`datastore.js`, () => {
 
   describe('readEntities()', _asyncToGenerator(function* () {
     it(`should return a nice formatted list with response stuff in metadata`, _asyncToGenerator(function* () {
-      const result = yield readEntities(testKey1);
+      const result = yield readEntities([testKey1]);
       assertSuccess(result);
       const keyData = payload(result);
       equal({
         [entityName1]: testData1
       }, keyData);
+    }));
+
+    it(`should work with an array`, _asyncToGenerator(function* () {
+      const testKeys = [testKey1, testKey2];
+      const result = yield readEntities(testKeys);
+      assertSuccess(result);
+      const keyData = payload(result);
+      equal(testData1, keyData[entityName1]);
+      equal(testData2, keyData[entityName2]);
+    }));
+
+    it(`should return undefined if it doesn't read`, _asyncToGenerator(function* () {
+      const testKeys = [testKey1, testKey2, nonexistantKey];
+      const result = yield readEntities(testKeys);
+      assertSuccess(result);
+      const keyData = payload(result);
+      equal(testData1, keyData[entityName1]);
+      equal(testData2, keyData[entityName2]);
+      equal(undefined, keyData[nonexistantKey]);
+    }));
+
+    it('should fail if the key doesnt exist', _asyncToGenerator(function* () {
+      const result = yield readEntities([nonexistantKey]);
+      assertFailure(result);
     }));
   }));
 
