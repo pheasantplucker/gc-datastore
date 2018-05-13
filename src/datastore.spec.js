@@ -23,6 +23,7 @@ const {
   getRawEntitiesByKeys,
   formatKeyResponse,
   getDatastoreKeySymbol,
+  makeArray,
 } = require('./datastore')
 
 const { GC_PROJECT_ID } = process.env
@@ -267,9 +268,16 @@ describe(`datastore.js`, () => {
     })
   })
 
+  describe(`makeArray()`, () => {
+    it(`should return a success array from an array or string or fail`, () => {
+      const result = makeArray('fling')
+      assert(typeof result, 'array')
+    })
+  })
+
   describe('readEntities()', async () => {
     it(`should return a nice formatted list with response stuff in metadata`, async () => {
-      const result = await readEntities([testKey1])
+      const result = await readEntities(testKey1)
       assertSuccess(result)
       const keyData = payload(result)
       equal(

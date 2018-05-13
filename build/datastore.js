@@ -40,9 +40,16 @@ const makeDatastoreKey = (kind, entityName) => {
   }
 };
 
+const makeArray = input => {
+  if (Array.isArray(input)) return input;
+  return [input];
+};
+
 const readEntities = (() => {
   var _ref = _asyncToGenerator(function* (keys) {
-    const getEntities = yield getRawEntitiesByKeys(keys);
+    const keyArray = makeArray(keys);
+
+    const getEntities = yield getRawEntitiesByKeys(keyArray);
     if (isFailure(getEntities)) {
       return getEntities;
     }
@@ -59,7 +66,7 @@ const readEntities = (() => {
     }
     const cleanResponse = payload(cleanResponseResult);
 
-    const inputKeys = keys.map(function (key) {
+    const inputKeys = keyArray.map(function (key) {
       return key.name;
     });
 
@@ -283,5 +290,6 @@ module.exports = {
   formatKeyResponse,
   createQueryObj,
   runQuery,
-  runQueryKeysOnly
+  runQueryKeysOnly,
+  makeArray
 };

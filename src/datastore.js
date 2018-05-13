@@ -37,8 +37,15 @@ const makeDatastoreKey = (kind, entityName) => {
   }
 }
 
+const makeArray = input => {
+  if (Array.isArray(input)) return input
+  return [input]
+}
+
 const readEntities = async keys => {
-  const getEntities = await getRawEntitiesByKeys(keys)
+  const keyArray = makeArray(keys)
+
+  const getEntities = await getRawEntitiesByKeys(keyArray)
   if (isFailure(getEntities)) {
     return getEntities
   }
@@ -55,7 +62,7 @@ const readEntities = async keys => {
   }
   const cleanResponse = payload(cleanResponseResult)
 
-  const inputKeys = keys.map(key => {
+  const inputKeys = keyArray.map(key => {
     return key.name
   })
 
@@ -240,4 +247,5 @@ module.exports = {
   createQueryObj,
   runQuery,
   runQueryKeysOnly,
+  makeArray,
 }
