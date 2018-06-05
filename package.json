@@ -1,6 +1,6 @@
 {
   "name": "@pheasantplucker/gc-datastore",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A failables wrapper around Google Cloud's Datastore",
   "main": "./src/datastore.js",
   "scripts": {
