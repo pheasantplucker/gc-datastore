@@ -25,6 +25,7 @@ const {
   getDatastoreKeySymbol,
   makeArray,
   lookup,
+  convertKeyToV1,
 } = require('./datastore')
 
 const { GC_PROJECT_ID } = process.env
@@ -238,14 +239,22 @@ describe(`datastore.js`, () => {
     // })
   })
 
-  describe.skip(`lookup()`, () => {
+  describe(`lookup()`, () => {
     it(`should return an array of objects found in the DB Keys removing non-written keys`, async () => {
       const testKeys = [testKey1, nonexistantKey]
       const result = await lookup(testKeys)
-      console.log(`result:`, result)
       assertSuccess(result)
       const returnKeys = payload(result)
-      assert(returnKeys.length, 1)
+      assert(returnKeys.found.length, 1)
+      assert(returnKeys.missing.length, 1)
+    })
+  })
+
+  describe(`convertKeyToV1()`, () => {
+    it(`should replace path with the nested abomination of kind,name`, () => {
+      const result = convertKeyToV1(testKey1)
+      const correctPath = [{ kind: kind, name: entityName1 }]
+      equal(result.path, correctPath)
     })
   })
 

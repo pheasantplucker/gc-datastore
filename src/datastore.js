@@ -200,16 +200,31 @@ const runQueryKeysOnly = async queryObj => {
   return success()
 }
 
+const convertKeyToV1 = key => {
+  const v1Path = {
+    path: [
+      {
+        kind: key.kind,
+        name: key.name,
+      },
+    ],
+  }
+  return Object.assign({}, key, v1Path)
+}
+
 const lookup = async keys => {
   try {
-    var request = {
-      projectId: projectId,
-      keys: keys,
-    }
+    const v1Keys = await keys.map(key => {
+      return convertKeyToV1(key)
+    })
 
-    console.log(`request:`, request)
+    let request = {
+      projectId: projectId,
+      keys: v1Keys,
+    }
     const lookupRes = await datastoreV1.lookup(request)
-    return success(lookupRes)
+    const response = lookupRes[0]
+    return success(response)
   } catch (e) {
     return failure(e.toString())
   }
@@ -271,4 +286,5 @@ module.exports = {
   runQueryKeysOnly,
   makeArray,
   lookup,
+  convertKeyToV1,
 }
