@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@google-cloud/datastore": "^1.4.0",
-    "@pheasantplucker/failables-node6": "^2.0.3",
+    "@pheasantplucker/failables": "^2.0.4",
     "mocha": "^5.1.1",
     "ramda": "^0.25.0",
     "uuid": "^3.2.1"

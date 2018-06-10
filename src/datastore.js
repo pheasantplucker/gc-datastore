@@ -4,18 +4,25 @@ const {
   payload,
   isFailure,
   meta,
-} = require('@pheasantplucker/failables-node6')
+} = require('@pheasantplucker/failables')
 const Datastore = require('@google-cloud/datastore')
 const ramda = require('ramda')
 
-let datastore
+let datastore, datastoreV1, projectId
 
-const createDatastoreClient = projectId => {
+const createDatastoreClient = inProjectId => {
   try {
     const newDatastore = new Datastore({
-      projectId: projectId,
+      projectId: inProjectId,
     })
     datastore = newDatastore
+
+    const newDatastoreV1 = new Datastore.v1.DatastoreClient({
+      projectId: inProjectId,
+    })
+    datastoreV1 = newDatastoreV1
+
+    projectId = inProjectId
     return success(newDatastore)
   } catch (e) {
     return failure(e.toString())
@@ -193,6 +200,21 @@ const runQueryKeysOnly = async queryObj => {
   return success()
 }
 
+const lookup = async keys => {
+  try {
+    var request = {
+      projectId: projectId,
+      keys: keys,
+    }
+
+    console.log(`request:`, request)
+    const lookupRes = await datastoreV1.lookup(request)
+    return success(lookupRes)
+  } catch (e) {
+    return failure(e.toString())
+  }
+}
+
 /* Helpers */
 const formatResponse = response => {
   const symbol = payload(getDatastoreKeySymbol())
@@ -248,4 +270,5 @@ module.exports = {
   runQuery,
   runQueryKeysOnly,
   makeArray,
+  lookup,
 }

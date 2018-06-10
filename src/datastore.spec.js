@@ -5,7 +5,7 @@ const {
   isSuccess,
   isFailure,
   meta,
-} = require(`@pheasantplucker/failables-node6`)
+} = require(`@pheasantplucker/failables`)
 const assert = require('assert')
 const equal = assert.deepEqual
 const {
@@ -24,6 +24,7 @@ const {
   formatKeyResponse,
   getDatastoreKeySymbol,
   makeArray,
+  lookup,
 } = require('./datastore')
 
 const { GC_PROJECT_ID } = process.env
@@ -235,6 +236,17 @@ describe(`datastore.js`, () => {
     // it.skip(`COULD also set the datastore object scope`, () => {
     //    //but I don't know why you need that!
     // })
+  })
+
+  describe.skip(`lookup()`, () => {
+    it(`should return an array of objects found in the DB Keys removing non-written keys`, async () => {
+      const testKeys = [testKey1, nonexistantKey]
+      const result = await lookup(testKeys)
+      console.log(`result:`, result)
+      assertSuccess(result)
+      const returnKeys = payload(result)
+      assert(returnKeys.length, 1)
+    })
   })
 
   describe(`runQuery()`, () => {
