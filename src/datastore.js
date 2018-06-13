@@ -6,6 +6,7 @@ const {
   meta,
 } = require('@pheasantplucker/failables')
 const Datastore = require('@google-cloud/datastore')
+const { writeFile, mkdirs } = require('fs-extra')
 const ramda = require('ramda')
 
 let datastore, datastoreV1, projectId
@@ -108,7 +109,20 @@ const makeEntityByName = (kind, entityName, data) => {
   return success(entity)
 }
 
-const writeEntity = async entity => {
+const writeEntity = async (entity, onlyWriteTestsToLocalPath = '') => {
+  if (onlyWriteTestsToLocalPath) {
+    try {
+      // write to local path
+      await mkdirs(onlyWriteTestsToLocalPath)
+      const fileName = entity.key.name
+      const fullPath = onlyWriteTestsToLocalPath + fileName
+      await writeFile(fullPath, JSON.stringify(entity, null, '\t'))
+      return success(fullPath)
+    } catch (e) {
+      return failure(e.toString())
+    }
+  }
+
   const datastoreInitialized = checkIfDatastoreInitialized()
   if (isFailure(datastoreInitialized)) return datastoreInitialized
 

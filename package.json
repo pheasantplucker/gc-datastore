@@ -31,6 +31,7 @@
   "dependencies": {
     "@google-cloud/datastore": "^1.4.0",
     "@pheasantplucker/failables": "^2.0.4",
+    "fs-extra": "^6.0.1",
     "mocha": "^5.1.1",
     "ramda": "^0.25.0",
     "uuid": "^3.2.1"

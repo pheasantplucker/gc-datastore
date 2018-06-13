@@ -142,6 +142,14 @@ describe(`datastore.js`, () => {
       const result = await writeEntity()
       assertFailure(result)
     })
+
+    it('should be able to write test data to a local path', async () => {
+      const localPath = './testdata/'
+      const result = await writeEntity(entity1, localPath)
+      assertSuccess(result)
+      const entity1Read = await getRawEntitiesByKeys(testKey1)
+      assertSuccess(entity1Read)
+    })
   })
 
   describe(`getDatastoreKeySymbol()`, () => {
