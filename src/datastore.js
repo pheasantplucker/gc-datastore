@@ -13,20 +13,27 @@ let datastore, datastoreV1, projectId
 
 const createDatastoreClient = inProjectId => {
   try {
-    const newDatastore = new Datastore({
+    console.log('making a client')
+    datastore = new Datastore({
       projectId: inProjectId,
     })
-    datastore = newDatastore
 
-    const newDatastoreV1 = new Datastore.v1.DatastoreClient({
+    datastoreV1 = new Datastore.v1.DatastoreClient({
       projectId: inProjectId,
     })
-    datastoreV1 = newDatastoreV1
 
     projectId = inProjectId
-    return success(newDatastore)
+    return success(datastore)
   } catch (e) {
     return failure(e.toString())
+  }
+}
+
+function make_entity(kind, id, data) {
+  const key = payload(makeDatastoreKey(kind, id))
+  return {
+    key,
+    data,
   }
 }
 
@@ -283,6 +290,25 @@ const checkIfDatastoreInitialized = caller => {
   })
 }
 
+const insert = async ents => {
+  const items = makeArray(ents)
+  let inserted = []
+  let existed = []
+  for (let i = 0; i < items.length; i++) {
+    try {
+      await datastore.insert(items[i])
+      inserted.push(items[i].key.name)
+    } catch (e) {
+      if (e.code === 6) {
+        existed.push(items[i].key.name)
+      } else {
+        return failure(e.toString())
+      }
+    }
+  }
+  return success({ inserted, existed })
+}
+
 module.exports = {
   readEntities,
   createDatastoreClient,
@@ -301,4 +327,6 @@ module.exports = {
   makeArray,
   lookup,
   convertKeyToV1,
+  make_entity,
+  insert,
 }

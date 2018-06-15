@@ -26,49 +26,50 @@ const {
   makeArray,
   lookup,
   convertKeyToV1,
+  make_entity,
+  insert,
 } = require('./datastore')
+const uuid = require('uuid')
+
+// *********************************************
+//
+//                    SETUP
+//
+// *********************************************
 
 const { GC_PROJECT_ID } = process.env
+const kind = 'testKind'
+const kind2 = 'testKind2'
+const namespace = 'testNamespace'
+const entityName1 = 'testEntity1'
+const entityName2 = 'testEntity2'
+const nonexistantEntityName = 'ERROR_ERROR_IF_THIS_IS_WRITEN_BAD'
+const testData1 = { description: 'no where now here when ew' }
+const testData2 = { description: 'how now brown cow' }
+const result = createDatastoreClient(GC_PROJECT_ID)
+assertSuccess(result)
+const testKey1 = payload(makeDatastoreKey(kind, entityName1))
+const entity1 = payload(makeEntityByName(kind, entityName1, testData1))
+
+const testKey2 = payload(makeDatastoreKey(kind, entityName2))
+const entity2 = payload(makeEntityByName(kind, entityName2, testData2))
+
+const nonexistantKey = payload(makeDatastoreKey(kind, nonexistantEntityName))
+const separateKindEntity = payload(
+  makeEntityByName(kind2, entityName1, testData1)
+)
 
 describe(`datastore.js`, () => {
-  const kind = 'testKind'
-  const kind2 = 'testKind2'
-  const namespace = 'testNamespace'
-  const entityName1 = 'testEntity1'
-  const entityName2 = 'testEntity2'
-  const nonexistantEntityName = 'ERROR_ERROR_IF_THIS_IS_WRITEN_BAD'
-  const testData1 = { description: 'no where now here when ew' }
-  const testData2 = { description: 'how now brown cow' }
-
-  describe(`createDatastoreClient()`, () => {
-    it(`should return a client`, () => {
-      const result = createDatastoreClient(GC_PROJECT_ID)
-      assertSuccess(result)
+  describe('writeEntity()', () => {
+    it('should write an entity', async () => {
+      const writeResult = await writeEntity([
+        entity1,
+        entity2,
+        separateKindEntity,
+      ])
+      assertSuccess(writeResult)
     })
   })
-
-  createDatastoreClient(GC_PROJECT_ID)
-
-  const testKey1 = payload(makeDatastoreKey(kind, entityName1))
-  const entity1 = payload(makeEntityByName(kind, entityName1, testData1))
-
-  const testKey2 = payload(makeDatastoreKey(kind, entityName2))
-  const entity2 = payload(makeEntityByName(kind, entityName2, testData2))
-
-  const nonexistantKey = payload(makeDatastoreKey(kind, nonexistantEntityName))
-  const separateKindEntity = payload(
-    makeEntityByName(kind2, entityName1, testData1)
-  )
-  const setup = async () => {
-    const writeResult = await writeEntity([
-      entity1,
-      entity2,
-      separateKindEntity,
-    ])
-    assertSuccess(writeResult)
-  }
-
-  setup()
 
   describe('makeDatastoreKey()', () => {
     it('should return a valid key', () => {
@@ -366,6 +367,22 @@ describe(`datastore.js`, () => {
       assertSuccess(result)
       const keysData = payload(result)
       equal(keysData.length, keys.length)
+    })
+  })
+  describe('insert', () => {
+    it('should insert a list of entities', async () => {
+      const kind = 'insert_kind'
+      const name1 = uuid.v4()
+      const name2 = uuid.v4()
+      const e1 = make_entity(kind, name1, { foo: 1 })
+      const e2 = make_entity(kind, name2, { foo: 2 })
+      const expected = { inserted: [name2], existed: [name1] }
+      const r1 = await writeEntity(e1)
+      assertSuccess(r1)
+      const r2 = await insert([e1, e2])
+      assertSuccess(r2)
+      const p = payload(r2)
+      equal(p, expected)
     })
   })
 })

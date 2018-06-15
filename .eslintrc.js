@@ -42,5 +42,6 @@ module.exports = {
     test: true,
     beforeAll: true,
     afterAll: true,
+    before: true,
   },
 }
