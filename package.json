@@ -29,7 +29,7 @@
     "prettier": "^1.7.4"
   },
   "dependencies": {
-    "@google-cloud/datastore": "^1.4.0",
+    "@google-cloud/datastore": "^1.4.1",
     "@pheasantplucker/failables": "^2.0.4",
     "fs-extra": "^6.0.1",
     "mocha": "^5.1.1",
