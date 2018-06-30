@@ -28,6 +28,9 @@ const {
   convertKeyToV1,
   make_entity,
   insert,
+  batch_get,
+  batch_set,
+  batch_delete,
 } = require('./datastore')
 const uuid = require('uuid')
 
@@ -59,7 +62,8 @@ const separateKindEntity = payload(
   makeEntityByName(kind2, entityName1, testData1)
 )
 
-describe(`datastore.js`, () => {
+describe(`datastore.js`, function() {
+  this.timeout(4 * 1000)
   describe('writeEntity()', () => {
     it('should write an entity', async () => {
       const writeResult = await writeEntity([
@@ -383,6 +387,49 @@ describe(`datastore.js`, () => {
       assertSuccess(r2)
       const p = payload(r2)
       equal(p, expected)
+    })
+  })
+
+  describe.only(`batch`, () => {
+    it('make some data', async () => {
+      const namespace = 'namespace1'
+      const meta = {
+        excludeFromIndexes: ['hash', 'title'],
+        method: 'insert',
+      }
+      const keys_and_data = [
+        ['test_kind', 'bg1', { hash: '1', title: 'one' }],
+        ['test_kind', 'bg2', { hash: '2', title: 'two' }],
+        ['test_kind', 'bg3', { hash: '3', title: 'thr' }],
+      ]
+      const result = await batch_set(namespace, keys_and_data, meta)
+      assertSuccess(result)
+    })
+    it('get the data as a map', async () => {
+      const namespace = 'namespace1'
+      const keys = [
+        ['test_kind', 'bg1'],
+        ['test_kind', 'bg2'],
+        ['test_kind', 'bg3'],
+      ]
+      const fields = ['hash']
+      const result = await batch_get(namespace, keys, fields)
+      assertSuccess(result)
+      equal(payload(result), {
+        bg1: { hash: '1' },
+        bg2: { hash: '2' },
+        bg3: { hash: '3' },
+      })
+    })
+    it('delete the data', async () => {
+      const namespace = 'namespace1'
+      const keys = [
+        ['test_kind', 'bg1'],
+        ['test_kind', 'bg2'],
+        ['test_kind', 'bg3'],
+      ]
+      const result = await batch_delete(namespace, keys)
+      assertSuccess(result)
     })
   })
 })

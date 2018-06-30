@@ -309,6 +309,33 @@ const insert = async ents => {
   return success({ inserted, existed })
 }
 
+async function batch_set(namespace, keys_and_data, meta) {
+  try {
+    const entities = keys_and_data.map(i => {
+      const k = makeDatastoreKey(i[1], i[2])
+    })
+    return success()
+  } catch (error) {
+    return failure(error.toString())
+  }
+}
+
+async function batch_get(keys, fields) {
+  try {
+    return success()
+  } catch (error) {
+    return failure(error.toString())
+  }
+}
+
+async function batch_delete(keys) {
+  try {
+    return success()
+  } catch (error) {
+    return failure(error.toString())
+  }
+}
+
 module.exports = {
   readEntities,
   createDatastoreClient,
@@ -329,4 +356,7 @@ module.exports = {
   convertKeyToV1,
   make_entity,
   insert,
+  batch_get,
+  batch_set,
+  batch_delete,
 }
