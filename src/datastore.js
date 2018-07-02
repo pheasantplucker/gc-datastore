@@ -8,33 +8,39 @@ const {
 const Datastore = require('@google-cloud/datastore')
 const { writeFile, mkdirs } = require('fs-extra')
 const ramda = require('ramda')
+const set_diff = require('lodash.difference')
+let datastore, datastoreV1
+let PROJECT_ID
 
-let datastore, datastoreV1, projectId
-
-const createDatastoreClient = inProjectId => {
+const createDatastoreClient = project_id => {
   try {
-    console.log('making a client')
-    datastore = new Datastore({
-      projectId: inProjectId,
-    })
-
-    datastoreV1 = new Datastore.v1.DatastoreClient({
-      projectId: inProjectId,
-    })
-
-    projectId = inProjectId
+    PROJECT_ID = project_id
+    if (!datastore) {
+      datastore = new Datastore({
+        projectId: PROJECT_ID,
+      })
+    }
+    if (!datastoreV1) {
+      datastoreV1 = new Datastore.v1.DatastoreClient({
+        projectId: PROJECT_ID,
+      })
+    }
     return success(datastore)
   } catch (e) {
     return failure(e.toString())
   }
 }
 
-function make_entity(kind, id, data) {
+function make_entity(kind, id, data, meta) {
   const key = payload(makeDatastoreKey(kind, id))
-  return {
-    key,
-    data,
-  }
+  return Object.assign(
+    {},
+    {
+      key,
+      data,
+    },
+    meta
+  )
 }
 
 const getDatastoreKeySymbol = () => {
@@ -240,7 +246,7 @@ const lookup = async keys => {
     })
 
     let request = {
-      projectId: projectId,
+      projectId: PROJECT_ID,
       keys: v1Keys,
     }
     const lookupRes = await datastoreV1.lookup(request)
@@ -309,28 +315,91 @@ const insert = async ents => {
   return success({ inserted, existed })
 }
 
-async function batch_set(namespace, keys_and_data, meta) {
-  try {
-    const entities = keys_and_data.map(i => {
-      const k = makeDatastoreKey(i[1], i[2])
+// ========================================================
+//
+//                     BATCH_MODE
+//
+// ========================================================
+function make_key(namespace, kind, id) {
+  if (!namespace) return failure('make_key no namespace')
+  if (!kind) return failure('make_key no kind')
+  if (!id) return failure('make_key no id')
+  return success(
+    datastore.key({
+      namespace,
+      path: [kind, id],
     })
-    return success()
+  )
+}
+
+function batch_make_keys(namespace, data) {
+  const keys = []
+  for (let i = 0; i < data.length; i++) {
+    const r1 = make_key(namespace, data[i][0], data[i][1])
+    if (isFailure(r1)) return r1
+    const p = payload(r1)
+    keys.push(p)
+  }
+  return success(keys)
+}
+
+function batch_make_entities(namespace, data, meta) {
+  const entities = []
+  for (let i = 0; i < data.length; i++) {
+    const r1 = make_key(namespace, data[i][0], data[i][1])
+    if (isFailure(r1)) return r1
+    const key = payload(r1)
+    entities.push(Object.assign({}, { key, data: data[i][2] }, meta))
+  }
+  return success(entities)
+}
+
+// keys_and_data looks like
+// const data = [
+//   ['test_kind', 'bg1', { hash: '1', title: 'one' }],
+//   ['test_kind', 'bg2', { hash: '2', title: 'two' }],
+//   ['test_kind', 'bg3', { hash: '3', title: 'thr' }],
+// ]
+async function batch_set(namespace, data, meta) {
+  try {
+    const r1 = batch_make_entities(namespace, data, meta)
+    if (isFailure(r1)) return r1
+    const p = payload(r1)
+    return writeEntity(p)
   } catch (error) {
     return failure(error.toString())
   }
 }
 
-async function batch_get(keys, fields) {
+async function batch_get(namespace, data) {
   try {
-    return success()
+    const ids_to_find = data.map(d => d[1])
+    const r1 = batch_make_keys(namespace, data)
+    if (isFailure(r1)) return r1
+    const keys = payload(r1)
+    const r2 = await datastore.get(keys)
+    const entities = r2[0]
+    const r3 = formatResponse(entities)
+    if (isFailure(r3)) return r3
+    const formatted = payload(r3)
+    const found = Object.keys(formatted).sort()
+    const missing = set_diff(ids_to_find, found)
+    return success({
+      items: formatted,
+      found,
+      missing,
+    })
   } catch (error) {
     return failure(error.toString())
   }
 }
 
-async function batch_delete(keys) {
+async function batch_delete(namespace, data) {
   try {
-    return success()
+    const r1 = batch_make_keys(namespace, data)
+    if (isFailure(r1)) return r1
+    const r2 = await datastore.delete(payload(r1))
+    return success({ count: r2[0].indexUpdates })
   } catch (error) {
     return failure(error.toString())
   }

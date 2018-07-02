@@ -390,7 +390,7 @@ describe(`datastore.js`, function() {
     })
   })
 
-  describe.only(`batch`, () => {
+  describe(`batch`, () => {
     it('make some data', async () => {
       const namespace = 'namespace1'
       const meta = {
@@ -403,6 +403,7 @@ describe(`datastore.js`, function() {
         ['test_kind', 'bg3', { hash: '3', title: 'thr' }],
       ]
       const result = await batch_set(namespace, keys_and_data, meta)
+      //console.log(payload(result))
       assertSuccess(result)
     })
     it('get the data as a map', async () => {
@@ -411,14 +412,32 @@ describe(`datastore.js`, function() {
         ['test_kind', 'bg1'],
         ['test_kind', 'bg2'],
         ['test_kind', 'bg3'],
+        ['test_kind', 'bg4'],
       ]
       const fields = ['hash']
       const result = await batch_get(namespace, keys, fields)
       assertSuccess(result)
       equal(payload(result), {
-        bg1: { hash: '1' },
-        bg2: { hash: '2' },
-        bg3: { hash: '3' },
+        items: {
+          bg1: { hash: '1', title: 'one' },
+          bg2: { hash: '2', title: 'two' },
+          bg3: { hash: '3', title: 'thr' },
+        },
+        found: ['bg1', 'bg2', 'bg3'],
+        missing: ['bg4'],
+      })
+    })
+    it('try getting keys that are not in the database', async () => {
+      const namespace = 'namespace1'
+      const keys = [['test_kind', 'bg5'], ['test_kind', 'bg6']]
+      const fields = ['hash']
+      const result = await batch_get(namespace, keys, fields)
+      assertSuccess(result)
+      const p = payload(result)
+      equal(p, {
+        items: {},
+        found: [],
+        missing: ['bg5', 'bg6'],
       })
     })
     it('delete the data', async () => {
@@ -427,9 +446,12 @@ describe(`datastore.js`, function() {
         ['test_kind', 'bg1'],
         ['test_kind', 'bg2'],
         ['test_kind', 'bg3'],
+        ['test_kind', 'bg4'],
       ]
       const result = await batch_delete(namespace, keys)
       assertSuccess(result)
+      const p = payload(result)
+      equal(p, { count: 3 })
     })
   })
 })
